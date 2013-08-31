@@ -26,13 +26,14 @@ def find_all_instances(sub_string, string, string_segment, entry_type, hd):
 	index = 0
 	for i in string:
 		string_segment = string[index:(index+len(sub_string))]
-		if hamming_distance(sub_string, string_segment) <= int(hd):
-			with open(new_file_path, 'ab') as csvfile:
-				writer = csv.writer(csvfile, delimiter = ',')
-				if entry_type == 'string':
-					writer.writerow([sub_string + ' found at index ' + str(index)] + [' ' + string[(int(index) - 5): (int(index) + len(sub_string) + 5)]])
-				elif entry_type == 'file':
-					writer.writerow([row[0]] + [sub_string + ' found at index ' + str(index)])
+		if len(string_segment) == len(sub_string):
+			if hamming_distance(sub_string, string_segment) <= int(hd):
+				with open(new_file_path, 'ab') as csvfile:
+					writer = csv.writer(csvfile, delimiter = ',')
+					if entry_type == 'string':
+						writer.writerow([sub_string + ' found at index ' + str(index)] + [' ' + string[(int(index) - 5): (int(index) + len(sub_string) + 5)]])
+					elif entry_type == 'file':
+						writer.writerow([row[0]] + [sub_string + ' found at index ' + str(index)])
 		index += 1
 
 #if a string is to be searched
