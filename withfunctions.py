@@ -84,7 +84,7 @@ elif entry_type == 'file':
 		with open(new_file_path, 'ab') as csvfile:
 			writer = csv.writer(csvfile, delimiter = ',')
 			writer.writerow([key] + [found[key]])
-
+			
 #if input is neither 'string' nor 'file'
 else:
 	print 'Incorrect input.'
@@ -109,9 +109,21 @@ class hamming_distance_tests(unittest.TestCase):
 	def test4(self):
 		self.assertEqual(hamming_distance('acgt','tgca'), 4)
 
-class find_all_instances_tests(unittest.TestCase):
-	pass
+class found_tests(unittest.TestCase):
 	
+	"""relies on searching a specific file. This is the text of that specific csv file:
+	string1,AAAAAAAAAAAAAGGGAAAAAAAAAAAAAAAAAAGGGAAA
+	string2,GGGGAAAAAAAGGGGAAAA
+	string3,AAAAAAAAAAAAAAGGGGAAAAAAAAAAAAAAAAAAGGGGAAAA"""
+	
+	def teststring1(self):
+		self.assertEqual(found['string1'], ['index 12', 'index 13', 'index 33', 'index 34'])
+		
+	def teststring2(self):
+		self.assertEqual(found['string2'], ['index 0', 'index 1', 'index 10', 'index 11', 'index 12'])
+		
+	def teststring3(self):
+		self.assertEqual(found['string3'], ['index 13', 'index 14', 'index 15', 'index 35', 'index 36', 'index 37'])
 def main():
 	unittest.main()
 	
