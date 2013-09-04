@@ -1,5 +1,7 @@
 import csv
 
+found = dict()
+
 #determines user entry type
 entry_type =raw_input('Would you like to type a string or use a file?(string or file) ')
 
@@ -23,17 +25,16 @@ def hamming_distance(sub_string, string_segment):
 
 #search and write function
 def find_all_instances(sub_string, string, string_segment, entry_type, hd):
+	global found
 	index = 0
 	for i in string:
 		string_segment = string[index:(index+len(sub_string))]
 		if len(string_segment) == len(sub_string):
 			if hamming_distance(sub_string, string_segment) <= int(hd):
-				with open(new_file_path, 'ab') as csvfile:
-					writer = csv.writer(csvfile, delimiter = ',')
-					if entry_type == 'string':
-						writer.writerow([sub_string + ' found at index ' + str(index)] + [' ' + string[(int(index) - 5): (int(index) + len(sub_string) + 5)]])
-					elif entry_type == 'file':
-						writer.writerow([row[0]] + [sub_string + ' found at index ' + str(index)])
+				if entry_type == 'string':
+					writer.writerow([sub_string + ' found at index ' + str(index)] + [' ' + string[(int(index) - 5): (int(index) + len(sub_string) + 5)]])
+				elif entry_type == 'file':
+					found.setdefault(row[0], []).append('index ' + str(index))
 		index += 1
 
 #if a string is to be searched
@@ -78,6 +79,11 @@ elif entry_type == 'file':
 		string = row[1]
 		string_segment = 0
 		find_all_instances(sub_string, string, string_segment, entry_type, hd)
+
+	for key in found:
+		with open(new_file_path, 'ab') as csvfile:
+			writer = csv.writer(csvfile, delimiter = ',')
+			writer.writerow([key] + [found[key]])
 
 #if input is neither 'string' nor 'file'
 else:
