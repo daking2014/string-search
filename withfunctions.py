@@ -1,16 +1,31 @@
 import csv
+from optparse import OptionParser
 
-#determines user entry type
-entry_type = raw_input('Would you like to type a string or use a file?(string or file) ')
+#options
+parser = OptionParser()
+parser.add_option('-a', '--inputfile',
+					dest='filename', 
+					help='The file to be searched (.csv)')
+parser.add_option('-o', '--outputfile',
+					dest='newfilename',
+					help='The file to be written to (.csv)')
+parser.add_option('-c', '--casesensitive',
+					action='store_true', dest='casesensitive', default=False,
+					help='If the search should be case sensitive')
+parser.add_option('-d', '--hammingdistance',
+					type='int', dest='hammingdistance', default=1,
+					help='The desired hamming distance for the search')
+parser.add_option('-s', '--substring',
+					dest='substring',
+					help='The substring that is being searched for')
+(options, args) = parser.parse_args()
 
-#file to write to
-new_file_path = raw_input('Enter path of file to be written to (.csv): ')
-
-#ask if search will be case sensitive
-case_sensitive = raw_input('Case sensitive search? (y/n) ')
-
-#user input hamming distance
-hd = raw_input('How many differences should be allowed between sub-string and match(hamming distance)? (enter an integer) ')
+#setting options variables
+file_path = options.filename
+new_file_path = options.newfilename
+case_sensitive = options.casesensitive
+hd = options.hammingdistance
+sub_string = options.substring
 
 #hamming distance function
 def hamming_distance(sub_string, string_segment):
@@ -22,86 +37,42 @@ def hamming_distance(sub_string, string_segment):
 		return distance
 
 #search function to return a dictionary with all instances found
-def find_all_instances(sub_string, string, string_segment, entry_type, hd, file_path, case_sensitive, row):
+def find_all_instances(sub_string, string, string_segment, hd, file_path, case_sensitive, row):
 	instances_dict = {}
-	if entry_type == 'file':
 		
-		#takes in text to search
-		holder = []
-		with open(file_path, 'r+') as text:
-			reader = csv.reader(text)
-			for row in reader:
-				holder.append(row)
-		
-		#searches each row and adds results to the instances_dict dictionary
-		for row in holder:
-			if case_sensitive == 'n':
-				row[1] = row[1].lower()
-				sub_string = sub_string.lower()
-			
-			string = row[1]
-			string_segment = 0
-		
-		
-			index = 0
-			for i in string:
-				string_segment = string[index:(index+len(sub_string))]
-				if len(string_segment) == len(sub_string):
-					if hamming_distance(sub_string, string_segment) <= int(hd):
-						instances_dict.setdefault(row[0], []).append('index ' + str(index))
-				index += 1
-		return instances_dict
+	#takes in text to search
+	holder = []
+	with open(file_path, 'r+') as text:
+		reader = csv.reader(text)
+		for row in reader:
+			holder.append(row)
 	
-	elif entry_type == 'string':
+	#searches each row and adds results to the instances_dict dictionary
+	for row in holder:
+		if case_sensitive == 'n':
+			row[1] = row[1].lower()
+			sub_string = sub_string.lower()
+		
+		string = row[1]
+		string_segment = 0
+	
+	
 		index = 0
 		for i in string:
 			string_segment = string[index:(index+len(sub_string))]
 			if len(string_segment) == len(sub_string):
 				if hamming_distance(sub_string, string_segment) <= int(hd):
-					instances_dict.setdefault('string1', []).append('index ' + str(index))
+					instances_dict.setdefault(row[0], []).append('index ' + str(index))
 			index += 1
-		return instances_dict
+	return instances_dict
 
-#if a string is to be searched
-if entry_type == 'string':
-	
-	#takes user input
-	string = raw_input('Enter string to be searched: ')
-	sub_string = raw_input('Enter search query: ')
-	
-	#case sensitive?
-	if case_sensitive == 'n':
-		sub_string = sub_string.lower()
-		string = string.lower()
-		
-	#search function
-	found_entrytypestring = find_all_instances(sub_string, string, 0, entry_type, hd, 0, case_sensitive, 0)
-	
-	for key in found_entrytypestring:
-		with open(new_file_path, 'ab') as csvfile:
-			writer = csv.writer(csvfile, delimiter = ',')
-			writer.writerow([key] + [found_entrytypestring[key]])
+#creates a usable output from the function (for writing to a new csv file)
+found = find_all_instances(sub_string, 0, 0, hd, file_path, case_sensitive, 0)
 
-#if a file is to be searched
-elif entry_type == 'file':
-	
-	#file to read from
-	file_path = raw_input('Enter file path of file to be searched (.csv): ')
-	
-	#takes user input
-	sub_string = raw_input('Enter search query: ')
-	
-	#creates a usable output from the function (for writing to a new csv file)
-	found = find_all_instances(sub_string, 0, 0, entry_type, hd, file_path, case_sensitive, 0)
-
-	for key in found:
-		with open(new_file_path, 'ab') as csvfile:
-			writer = csv.writer(csvfile, delimiter = ',')
-			writer.writerow([key] + [found[key]])
-			
-#if input is neither 'string' nor 'file'
-else:
-	print 'Incorrect input.'
+for key in found:
+	with open(new_file_path, 'ab') as csvfile:
+		writer = csv.writer(csvfile, delimiter = ',')
+		writer.writerow([key] + [found[key]])
 
 #----------------------------------------tests--------------------------------------------------------------------------
 import unittest
@@ -125,31 +96,21 @@ class hamming_distance_tests(unittest.TestCase):
 
 class instances_dict_tests(unittest.TestCase):
 	
+		
+	"""relies on searching a specific file for "GGGG". This is the text of that specific csv file:
+	string1,AAAAAAAAAAAAAGGGAAAAAAAAAAAAAAAAAAGGGAAA
+	string2,GGGGAAAAAAAGGGGAAAA
+	string3,AAAAAAAAAAAAAAGGGGAAAAAAAAAAAAAAAAAAGGGGAAAA"""
 	
-	if entry_type == 'file':
+	def teststring1(self):
+		self.assertEqual(found['string1'], ['index 12', 'index 13', 'index 33', 'index 34'])
 		
-		"""relies on searching a specific file for "GGGG". This is the text of that specific csv file:
-		string1,AAAAAAAAAAAAAGGGAAAAAAAAAAAAAAAAAAGGGAAA
-		string2,GGGGAAAAAAAGGGGAAAA
-		string3,AAAAAAAAAAAAAAGGGGAAAAAAAAAAAAAAAAAAGGGGAAAA"""
+	def teststring2(self):
+		self.assertEqual(found['string2'], ['index 0', 'index 1', 'index 10', 'index 11', 'index 12'])
 		
-		def teststring1(self):
-			self.assertEqual(found['string1'], ['index 12', 'index 13', 'index 33', 'index 34'])
-			
-		def teststring2(self):
-			self.assertEqual(found['string2'], ['index 0', 'index 1', 'index 10', 'index 11', 'index 12'])
-			
-		def teststring3(self):
-			self.assertEqual(found['string3'], ['index 13', 'index 14', 'index 15', 'index 35', 'index 36', 'index 37'])
-		
-	elif entry_type == 'string':
-		
-		"""relies on searching a specific string for "GGGG". The string is:
-		AAAAGGGGAAAAGGGGAAAA """
-		
-		def teststring_entrytypestring4(self):
-			self.assertEqual(found_entrytypestring['string1'], ['index 3', 'index 4', 'index 5', 'index 11', 'index 12', 'index 13'])
-
+	def teststring3(self):
+		self.assertEqual(found['string3'], ['index 13', 'index 14', 'index 15', 'index 35', 'index 36', 'index 37'])
+	
 def main():
 	unittest.main()
 	
