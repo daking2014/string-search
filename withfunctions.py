@@ -41,39 +41,58 @@ def find_all_instances(sub_string, string, string_segment, hd, file_path, case_s
 	instances_dict = {}
 		
 	#takes in text to search
-	holder = []
-	with open(file_path, 'r+') as text:
-		reader = csv.reader(text)
-		for row in reader:
-			holder.append(row)
-	
+	strings_for_searching = []
+	names = []
+	with open('check2.csv', 'r+') as searchfile:
+		text = list(searchfile)
+		for line in text:
+			
+			#title of each string
+			name = line.split(',')[:1]
+			title = ''
+			for c in name:
+				title += c
+			names.append(title)
+			
+			#each string
+			line = line.split(',')[1:]
+			string = ''
+			for c in line:
+				string += c
+			string = string[:-2]
+			strings_for_searching.append(string)
+
 	#searches each row and adds results to the instances_dict dictionary
-	for row in holder:
+	#variable for attaching the right title to the right search results
+	p = 0
+	
+	for row in strings_for_searching:
 		if case_sensitive == 'n':
-			row[1] = row[1].lower()
+			row = row.lower()
 			sub_string = sub_string.lower()
 		
-		string = row[1]
+		string = row
 		string_segment = 0
-	
 	
 		index = 0
 		for i in string:
 			string_segment = string[index:(index+len(sub_string))]
 			if len(string_segment) == len(sub_string):
 				if hamming_distance(sub_string, string_segment) <= int(hd):
-					instances_dict.setdefault(row[0], []).append('index ' + str(index))
+					instances_dict.setdefault(names[p], []).append('index ' + str(index))
 			index += 1
+		p += 1
 	return instances_dict
 
 #creates a usable output from the function (for writing to a new csv file)
 found = find_all_instances(sub_string, 0, 0, hd, file_path, case_sensitive, 0)
 
-for key in found:
-	with open(new_file_path, 'ab') as csvfile:
-		writer = csv.writer(csvfile, delimiter = ',')
-		writer.writerow([key] + [found[key]])
-
+#write to file
+with open(new_file_path, 'ab') as csvfile:
+	for key in found:
+		entry = str(key) + ',' + str(found[key]) + '\n'
+		csvfile.write(entry)
+	
 #----------------------------------------tests--------------------------------------------------------------------------
 import unittest
 
