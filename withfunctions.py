@@ -37,64 +37,52 @@ def hamming_distance(sub_string, string_segment):
 		return distance
 
 #search function to return a dictionary with all instances found
-def find_all_instances(sub_string, string, string_segment, hd, file_path, case_sensitive, row):
+def find_all_instances(file_path, sub_string, hd, case_sensitve):
+	hd = int(hd)
 	instances_dict = {}
 		
 	#takes in text to search
-	strings_for_searching = []
-	names = []
-	with open('check2.csv', 'r+') as searchfile:
+	strings_for_searching = {}
+	with open(file_path, 'r+') as searchfile:
 		text = list(searchfile)
 		for line in text:
-			
 			#title of each string
-			name = line.split(',')[:1]
-			title = ''
-			for c in name:
-				title += c
-			names.append(title)
+			splitUp = line.strip().split(',')
+			#print splitUp
+			strings_for_searching[splitUp[0]] = splitUp[1]
+	
+	#print strings_for_searching
 			
-			#each string
-			line = line.split(',')[1:]
-			string = ''
-			for c in line:
-				string += c
-			string = string[:-2]
-			strings_for_searching.append(string)
-
 	#searches each row and adds results to the instances_dict dictionary
 	#variable for attaching the right title to the right search results
-	p = 0
-	
-	for row in strings_for_searching:
-		if case_sensitive == 'n':
-			row = row.lower()
+	for name in strings_for_searching:
+		string = strings_for_searching[name]
+		if case_sensitive:
+			string = string.lower()
 			sub_string = sub_string.lower()
-		
-		string = row
-		string_segment = 0
 	
-		index = 0
-		for i in string:
+		for index in range(len(string)):
 			string_segment = string[index:(index+len(sub_string))]
 			if len(string_segment) == len(sub_string):
-				if hamming_distance(sub_string, string_segment) <= int(hd):
-					instances_dict.setdefault(names[p], []).append('index ' + str(index))
-			index += 1
-		p += 1
+				if hamming_distance(sub_string, string_segment) <= hd:
+					if not name in instances_dict:
+						instances_dict[name] = []
+					instances_dict[name].append(str(index))
+	#print instance_dict
 	return instances_dict
 
 #creates a usable output from the function (for writing to a new csv file)
-found = find_all_instances(sub_string, 0, 0, hd, file_path, case_sensitive, 0)
+found = find_all_instances(file_path, sub_string, hd, case_sensitive)
 
 #write to file
 with open(new_file_path, 'ab') as csvfile:
+	csvfile.write('sequence,location(s)\n')
 	for key in found:
-		entry = str(key) + ',' + str(found[key]) + '\n'
+		entry = str(key) + ',' + ';'.join([str(i) for i in found[key]]) + '\n'
 		csvfile.write(entry)
 	
 #----------------------------------------tests--------------------------------------------------------------------------
-import unittest
+"""import unittest
 
 class hamming_distance_tests(unittest.TestCase):
 
@@ -116,10 +104,10 @@ class hamming_distance_tests(unittest.TestCase):
 class instances_dict_tests(unittest.TestCase):
 	
 		
-	"""relies on searching a specific file for "GGGG". This is the text of that specific csv file:
+	""""""relies on searching a specific file for "GGGG". This is the text of that specific csv file:
 	string1,AAAAAAAAAAAAAGGGAAAAAAAAAAAAAAAAAAGGGAAA
 	string2,GGGGAAAAAAAGGGGAAAA
-	string3,AAAAAAAAAAAAAAGGGGAAAAAAAAAAAAAAAAAAGGGGAAAA"""
+	string3,AAAAAAAAAAAAAAGGGGAAAAAAAAAAAAAAAAAAGGGGAAAA""""""
 	
 	def teststring1(self):
 		self.assertEqual(found['string1'], ['index 12', 'index 13', 'index 33', 'index 34'])
@@ -135,3 +123,4 @@ def main():
 	
 if __name__ == '__main__':
 	main()
+"""
