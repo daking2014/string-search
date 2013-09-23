@@ -1,5 +1,6 @@
 import csv
 from optparse import OptionParser
+from string import maketrans
 
 #options
 parser = OptionParser()
@@ -9,7 +10,7 @@ parser.add_option('-a', '--inputfile',
 parser.add_option('-o', '--outputfile',
 					dest='newfilename',
 					help='The file to be written to (.csv)')
-parser.add_option('-c', '--casesensitive',
+parser.add_option('-k', '--casesensitive',
 					action='store_true', dest='casesensitive', default=False,
 					help='If the search should be case sensitive')
 parser.add_option('-d', '--hammingdistance',
@@ -18,6 +19,12 @@ parser.add_option('-d', '--hammingdistance',
 parser.add_option('-s', '--substring',
 					dest='substring',
 					help='The substring that is being searched for')
+parser.add_option('-c', '--complement',
+					action='store_true', dest='complement', default=False,
+					help='If the search should be for the search query\'s complement')
+parser.add_option('-r', '--rna',
+					action='store_true', dest='rna', default=False,
+					help='If the string to be searched is an RNA strand, and the search is for the complement')					
 (options, args) = parser.parse_args()
 
 #setting options variables
@@ -26,7 +33,18 @@ new_file_path = options.newfilename
 case_sensitive = options.casesensitive
 hd = options.hammingdistance
 sub_string = options.substring
+complement = options.complement
+rna = options.rna
 
+#complement function
+def create_DNA_complement(string_segment):
+	if rna:
+		table = maketrans('AUGC', 'UACG')
+	else:
+		table = maketrans('ATGC', 'TACG')
+	string_segment = string_segment.translate(table)
+	#print string_segment
+	return string_segment	
 #hamming distance function
 def hamming_distance(sub_string, string_segment):
 	distance = 0
@@ -63,6 +81,8 @@ def find_all_instances(file_path, sub_string, hd, case_sensitve):
 	
 		for index in range(len(string)):
 			string_segment = string[index:(index+len(sub_string))]
+			if complement:
+				string_segment = create_DNA_complement(string_segment)
 			if len(string_segment) == len(sub_string):
 				if hamming_distance(sub_string, string_segment) <= hd:
 					if not name in instances_dict:
