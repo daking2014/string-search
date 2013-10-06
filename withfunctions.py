@@ -39,12 +39,16 @@ rna = options.rna
 #complement function
 def create_DNA_complement(string_segment):
 	if rna:
-		table = maketrans('AUGC', 'UACG')
+		pairs = {'A':'U', 'U':'A', 'G':'C', 'C':'G'}
 	else:
-		table = maketrans('ATGC', 'TACG')
-	string_segment = string_segment.translate(table)
-	#print string_segment
-	return string_segment	
+		complement = ''
+		pairs = {'A':'T', 'T':'A', 'G':'C', 'C':'G'}
+		for b in string_segment:
+			b = pairs[b]
+			complement += b
+	print complement
+	return complement
+
 #hamming distance function
 def hamming_distance(sub_string, string_segment):
 	distance = 0
